@@ -10,26 +10,38 @@ defineProps<{
 
 const firstname = ref('')
 const lastname = ref('')
-const displayFirstName = ref('')
-const displayLastName = ref('')
-const resultsList = ref<RaceResult[]>([])
-const resultsCount = ref<Partial<number>>()
+
+type PersonalResults = {
+  firstName: string
+  lastName: string
+  resultList: RaceResult[]
+  resultsCount: number | undefined
+}
+
+const blankResult: PersonalResults = {
+  firstName: '',
+  lastName: '',
+  resultList: [],
+  resultsCount: undefined,
+}
+
+const personalResults = ref<PersonalResults>(blankResult)
 
 async function getResults() {
   const result = await fetchRaceResults()
-  resultsList.value = result.items
-  resultsCount.value = result.totalItems
-  displayFirstName.value = firstname.value
-  displayLastName.value = lastname.value
+
+  personalResults.value = {
+    firstName: firstname.value,
+    lastName: lastname.value,
+    resultList: result.items,
+    resultsCount: result.totalItems,
+  }
 }
 
 const clear = () => {
   firstname.value = ''
   lastname.value = ''
-  displayFirstName.value = ''
-  displayLastName.value = ''
-  resultsList.value = []
-  resultsCount.value = undefined
+  personalResults.value = blankResult
 }
 
 const fetchRaceResults = async (): Promise<NyrrApiData> => {
@@ -56,11 +68,11 @@ const fetchRaceResults = async (): Promise<NyrrApiData> => {
     <input v-model="lastname" @keyup.enter="getResults()" placeholder="Last Name (Optional)" />
     <button @click="getResults()">Submit!</button>
     <button @click="clear()">Clear</button>
-    <p>name: {{ displayFirstName + ' ' + displayLastName }}</p>
-    <p>number: {{ resultsCount }}</p>
+    <p>name: {{ personalResults.firstName + ' ' + personalResults.lastName }}</p>
+    <p>number: {{ personalResults.resultsCount }}</p>
     <ResultCardBlock
-      :results="resultsList"
-      :focus-name="displayLastName.toLowerCase()"
+      :results="personalResults.resultList"
+      :focus-name="personalResults.lastName.toLowerCase()"
     ></ResultCardBlock>
   </div>
 </template>
