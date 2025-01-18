@@ -8,22 +8,46 @@ defineProps<{
   msg: string
 }>()
 
-const name = ref('')
-const displayName = ref('')
-const resultsList = ref<RaceResult[]>([])
-const resultsCount = ref<Partial<number>>()
+const firstname = ref('')
+const lastname = ref('')
+
+type PersonalResults = {
+  firstName: string
+  lastName: string
+  resultList: RaceResult[]
+  resultsCount: number | undefined
+}
+
+const blankResult: PersonalResults = {
+  firstName: '',
+  lastName: '',
+  resultList: [],
+  resultsCount: undefined,
+}
+
+const personalResults = ref<PersonalResults>(blankResult)
 
 async function getResults() {
   const result = await fetchRaceResults()
-  resultsList.value = result.items
-  resultsCount.value = result.totalItems
-  displayName.value = name.value
+
+  personalResults.value = {
+    firstName: firstname.value,
+    lastName: lastname.value,
+    resultList: result.items,
+    resultsCount: result.totalItems,
+  }
+}
+
+const clear = () => {
+  firstname.value = ''
+  lastname.value = ''
+  personalResults.value = blankResult
 }
 
 const fetchRaceResults = async (): Promise<NyrrApiData> => {
   const postBody = {
     eventCode: 'M2024',
-    searchString: name.value,
+    searchString: firstname.value,
     handicap: null,
     sortColumn: 'overallTime',
     sortDescending: false,
@@ -39,11 +63,16 @@ const fetchRaceResults = async (): Promise<NyrrApiData> => {
 <template>
   <div>
     <h1>{{ msg }}</h1>
-    <p>Enter your first name and see how you stack up</p>
-    <input v-model="name" @keyup.enter="getResults()" />
+    <p>Enter your name and see how you stack up</p>
+    <input v-model="firstname" @keyup.enter="getResults()" placeholder="First Name" />
+    <input v-model="lastname" @keyup.enter="getResults()" placeholder="Last Name (Optional)" />
     <button @click="getResults()">Submit!</button>
-    <p>name: {{ displayName }}</p>
-    <p>number: {{ resultsCount }}</p>
-    <ResultCardBlock :results="resultsList"></ResultCardBlock>
+    <button @click="clear()">Clear</button>
+    <p>name: {{ personalResults.firstName + ' ' + personalResults.lastName }}</p>
+    <p>number: {{ personalResults.resultsCount }}</p>
+    <ResultCardBlock
+      :results="personalResults.resultList"
+      :focus-name="personalResults.lastName.toLowerCase()"
+    ></ResultCardBlock>
   </div>
 </template>
