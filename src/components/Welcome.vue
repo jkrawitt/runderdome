@@ -8,8 +8,10 @@ defineProps<{
   msg: string
 }>()
 
-const name = ref('')
-const displayName = ref('')
+const firstname = ref('')
+const lastname = ref('')
+const displayFirstName = ref('')
+const displayLastName = ref('')
 const resultsList = ref<RaceResult[]>([])
 const resultsCount = ref<Partial<number>>()
 
@@ -17,13 +19,23 @@ async function getResults() {
   const result = await fetchRaceResults()
   resultsList.value = result.items
   resultsCount.value = result.totalItems
-  displayName.value = name.value
+  displayFirstName.value = firstname.value
+  displayLastName.value = lastname.value
+}
+
+const clear = () => {
+  firstname.value = ''
+  lastname.value = ''
+  displayFirstName.value = ''
+  displayLastName.value = ''
+  resultsList.value = []
+  resultsCount.value = undefined
 }
 
 const fetchRaceResults = async (): Promise<NyrrApiData> => {
   const postBody = {
     eventCode: 'M2024',
-    searchString: name.value,
+    searchString: firstname.value,
     handicap: null,
     sortColumn: 'overallTime',
     sortDescending: false,
@@ -39,11 +51,16 @@ const fetchRaceResults = async (): Promise<NyrrApiData> => {
 <template>
   <div>
     <h1>{{ msg }}</h1>
-    <p>Enter your first name and see how you stack up</p>
-    <input v-model="name" @keyup.enter="getResults()" />
+    <p>Enter your name and see how you stack up</p>
+    <input v-model="firstname" @keyup.enter="getResults()" placeholder="First Name" />
+    <input v-model="lastname" @keyup.enter="getResults()" placeholder="Last Name (Optional)" />
     <button @click="getResults()">Submit!</button>
-    <p>name: {{ displayName }}</p>
+    <button @click="clear()">Clear</button>
+    <p>name: {{ displayFirstName + ' ' + displayLastName }}</p>
     <p>number: {{ resultsCount }}</p>
-    <ResultCardBlock :results="resultsList"></ResultCardBlock>
+    <ResultCardBlock
+      :results="resultsList"
+      :focus-name="displayLastName.toLowerCase()"
+    ></ResultCardBlock>
   </div>
 </template>
